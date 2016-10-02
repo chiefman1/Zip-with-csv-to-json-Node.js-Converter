@@ -1,0 +1,19 @@
+{
+  "name": "zipped_csv2json",
+  "version": "1.0.0",
+  "description": "Converter of ZIP Archive with .csv files inside to single .json file build on Node.js",
+  "main": "doit.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Chiefman",
+  "license": "ISC",
+  "dependencies": {
+	"csv-parse": "^1.1.7",
+    "datetimejs": "^0.3.4",
+	"stream-transform": "^0.1.1",
+    "JSONStream": "^1.2.1",
+    "stream-stream": "^1.2.6",
+    "adm-zip": "^0.4.7"
+  }
+}
