@@ -1,71 +1,44 @@
-var dt = require ('datetimejs')
 
-var reducer = function (csvrow) {
-	if (csvrow.first_name !== 'first_name') {
+//Unzipping and creating Stream
+	var createStream = require('./components/unzip-stream.js');
+	console.log ('Unzipping and creating Stream...DONE');
+	
+//Parsing CSV
+	
+	var parse = require('csv-parse');
+	var parser = parse({columns: true, delimiter: '||'});
+	var stream = createStream(process.argv[2]);
+	console.log ('Parsing CSV...DONE');
 
-	 	return {
-			name: csvrow.last_name + ' ' + csvrow.first_name,
-			phone: csvrow.phone.replace (/\D/g, ''),
-			person: {
-				firstName: csvrow.first_name,
-				lastName: csvrow.last_name
-			},
-			amount: parseFloat(csvrow.amount, 10).toFixed(2),
-			date: dt.reformat(csvrow.date, '%D/%n/%Y', '%Y-%m-%d'),
-			costCenterNum: csvrow.cc.replace(/\D/g, '')
-		}
-	}
-}
+//Restructuring Stream
+	var restructure = require('./components/restructute.js');
+	var transform = require('stream-transform');
+	var transformer = transform(restructure);
+	console.log ('Restructuring Stream...DONE');
+	
+//Stream to JSON
+	var JSONStreamer = require ('JSONStream').stringify();
+	console.log ('Streaming to JSON...DONE');
+	
+//Saving to file
+	var fs = require('fs');
+	var result = fs.createWriteStream('./result.json');
+	
+//Stream	
+stream.pipe(parser)
+	.pipe(transformer)
+	.pipe(JSONStreamer)
+	.pipe(result)
 
-var ss = require('stream-stream');
-var AdmZip = require('adm-zip');
-var stream = ss();
-var fs = require ('fs');
-
-var createStream = function(zipExtract){
-	var zip = new AdmZip(zipExtract);
-	var fileNames = zip.getEntries().map((entry) => entry.entryName);
-	zip.extractAllTo ('./temp/', true);
-	fileNames.forEach((f) => {
-		stream.write(fs.createReadStream('./temp/' + f))
-	});
-	stream.end();
-	return stream	
-}
-
-var fs = require('fs');
-var pathtemp = './temp/';
-var deleteFolderRecursive = function(path) {
-  if( fs.existsSync(path) ) {
-    fs.readdirSync(path).forEach(function(file,index){
-      var curPath = path + "/" + file;
-      if(fs.lstatSync(curPath).isDirectory()) { // recurse
-        deleteFolderRecursive(curPath);
-      } else { // delete file
-        fs.unlinkSync(curPath);
-      }
-    });
-	  //fs.rmdirSync(path); delete empty temp folder. Not working in Windows
-  }
-};
-
-var transform = require('stream-transform');
-var fs = require('fs');
-var parse = require('csv-parse');
-var transformer = transform(reducer);
-var JSONStreamer = require ('JSONStream').stringify();
-
-var parser = parse({columns: true, delimiter: '||'});
-var output = fs.createWriteStream('./result.json');
-var stream = createStream(process.argv[2]);
-
-stream
-.pipe(parser)
-.pipe(transformer)
-.pipe(JSONStreamer)
-
+//Done Message
 .on('end', ()=> {
-	console.log ('DONE! Zip was unzipped and csv files converted to result.json file')
-})
-.pipe(output)
-deleteFolderRecursive(pathtemp);
+		console.log ('DONE! Zip was unzipped and csv files converted to result.json file');
+	});
+	
+//Deleting temp files
+var deleteTemp = require('./components/deletetemp.js');
+var pathtemp = './temp/';
+console.log ('Deleting temp files...DONE');
+deleteTemp(pathtemp);
+
+
